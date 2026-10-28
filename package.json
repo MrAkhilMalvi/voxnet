@@ -1,0 +1,16 @@
+{
+  "name": "voxnet-local",
+  "version": "2.0.0",
+  "description": "SIM-Free Mobile Voice Platform over Wi-Fi & Hotspot",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test:voice": "node --test tests/voice-call.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "selfsigned": "^2.4.1",
+    "ws": "^8.18.0"
+  }
+}

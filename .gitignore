@@ -1,0 +1,42 @@
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+.pnpm-debug.log*
+
+# TypeScript Build Output
+dist/
+build/
+out/
+
+# Environment Variables & Secrets (Critical for Security)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+
+# MiniInfra Specific Files (Never commit downloaded instance keys)
+*.miniinfra
+clean_caddyfile.txt
+
+# Docker Data Volumes (If testing locally)
+data/
+postgres-data/
+redis-data/
+
+# OS & Editor Generated Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env-miniinfra-ui

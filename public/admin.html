@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOXNET Admin - Recharge & User Console</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a; color: #f8fafc; margin: 0; padding: 24px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 20px; margin-bottom: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+    th { color: #94a3b8; }
+    .btn-approve {
+      background: #10b981; color: #052e16; border: none; padding: 8px 14px;
+      border-radius: 8px; font-weight: 700; cursor: pointer;
+    }
+    .status-approved { color: #34d399; font-weight: 700; }
+    .status-pending { color: #fbbf24; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>VOXNET Admin — "Message Me to Recharge" Console</h2>
+    <p style="color:#94a3b8;">
+      Approve incoming <strong>₹79/Month (30 Days)</strong> or <strong>₹600/Year (₹50/mo — 365 Days)</strong> recharge messages with one click.
+    </p>
+
+    <div class="card">
+      <h3>Incoming User Recharge Messages</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>VOXNET Number</th>
+            <th>User Name</th>
+            <th>Pack Selected</th>
+            <th>User Message</th>
+            <th>Status / Action</th>
+          </tr>
+        </thead>
+        <tbody id="rechargeTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>All Registered Platform Users</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Virtual Number</th>
+            <th>Name</th>
+            <th>Current Plan</th>
+            <th>Plan Expiry</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const rechargeTableBody = document.getElementById('rechargeTableBody');
+    const usersTableBody = document.getElementById('usersTableBody');
+
+    async function loadAdminData() {
+      const res = await fetch('/api/admin/overview');
+      const data = await res.json();
+
+      rechargeTableBody.innerHTML = data.rechargeMessages.length
+        ? data.rechargeMessages.map((r) => `
+          <tr>
+            <td><strong>${r.virtualNumber}</strong></td>
+            <td>${r.displayName}</td>
+            <td>${r.planRequested === 'YEARLY_600' ? '₹600/Year (₹50/mo)' : '₹79/Month'}</td>
+            <td>${r.userMessage}</td>
+            <td>
+              ${
+                r.status === 'PENDING'
+                  ? `<button class="btn-approve" onclick="approveRecharge('${r.id}')">Approve ₹${r.amountInr} & Unlock</button>`
+                  : `<span class="status-approved">APPROVED</span>`
+              }
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" style="color:#94a3b8;">No recharge messages yet.</td></tr>';
+
+      usersTableBody.innerHTML = data.users.length
+        ? data.users.map((u) => `
+          <tr>
+            <td><strong>${u.virtualNumber}</strong></td>
+            <td>${u.displayName}</td>
+            <td>${u.currentPlan}</td>
+            <td>${new Date(u.planExpiresAt) > new Date() ? new Date(u.planExpiresAt).toLocaleDateString() : 'Expired'}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="4" style="color:#94a3b8;">No users registered yet.</td></tr>';
+    }
+
+    async function approveRecharge(requestId) {
+      await fetch('/api/admin/approve-recharge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId })
+      });
+      loadAdminData();
+    }
+
+    // Live updates via WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'ADMIN_SUBSCRIBE' }));
+    ws.onmessage = () => loadAdminData();
+
+    loadAdminData();
+  </script>
+</body>
+</html>
